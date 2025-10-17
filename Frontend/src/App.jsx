@@ -1,12 +1,9 @@
 import React from 'react'
+import HealthCheck from './components/HealthCheck';
 
 const App = () => {
   return (
-    <div>
-      <div className='container bg-purple-500'>
-        <h1>Hello World!</h1>
-      </div>
-    </div>
+        <HealthCheck />
   )
 }
 
