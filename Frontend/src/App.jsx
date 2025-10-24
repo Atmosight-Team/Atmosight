@@ -1,9 +1,13 @@
 import React from 'react'
 import HealthCheck from './components/HealthCheck';
+import WeatherDisplay from './components/WeatherDisplay';
 
 const App = () => {
   return (
-        <HealthCheck />
+    <div>
+      <HealthCheck />
+      <WeatherDisplay />
+    </div>
   )
 }
 
