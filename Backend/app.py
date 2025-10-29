@@ -25,6 +25,8 @@ def health():
 @app.route('/api/weather', methods=['GET'])
 def get_weather():
     location = request.args.get('location', 'New York')
+    layer = request.args.get('layer', 'precipitation_new')
+
     try:
         geo_url = f"http://api.openweathermap.org/geo/1.0/direct?q={location}&limit=1&appid={OPENWEATHER_API_KEY}"
         geo_response = requests.get(geo_url)
@@ -41,6 +43,8 @@ def get_weather():
         weather_response = requests.get(weather_url)
         weather_data = weather_response.json()
 
+        weather_map_url = f"https://tile.openweathermap.org/map/{layer}/{{z}}/{{x}}/{{y}}.png?appid={OPENWEATHER_API_KEY}"
+
         if weather_response.status_code == 200:
             weather_entry = WeatherData (
                 location= city_name,
@@ -56,10 +60,13 @@ def get_weather():
 
             return jsonify({
                 'location': city_name,
+                'lat': lat,
+                'lon': lon,
                 'temperature': weather_data['main']['temp'],
                 'description': weather_data['weather'][0]['description'],
                 'humidity': weather_data['main']['humidity'],
                 'wind_speed': weather_data['wind']['speed'],
+                'weather_map': weather_map_url,
             }), 200
         else:
             return jsonify({"error": "Failed to fetch weather data"}), 400
