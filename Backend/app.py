@@ -4,6 +4,7 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 from config import Config
 from models import db, WeatherData
+from services.anomaly_service import AnomalyDetector
 import os
 import requests
 
@@ -42,18 +43,6 @@ def get_weather():
         weather_data = weather_response.json()
 
         if weather_response.status_code == 200:
-            weather_entry = WeatherData (
-                location= city_name,
-                latitude= lat,
-                longitude= lon,
-                temperature= weather_data['main']['temp'],
-                description= weather_data['weather'][0]['description'],
-                humidity= weather_data['main']['humidity'],
-                wind_speed= weather_data['wind']['speed'],
-            )
-            db.session.add(weather_entry)
-            db.session.commit()
-
             return jsonify({
                 'location': city_name,
                 'temperature': weather_data['main']['temp'],
@@ -76,6 +65,29 @@ def get_weather_history():
             history = WeatherData.query.filter_by(location=location).order_by(WeatherData.timestamp.desc()).limit(limit).all()
         else:
             history = WeatherData.query.order_by(WeatherData.timestamp.desc()).limit(limit).all()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/analyze/anomaly', methods=['GET'])
+def analyze_anomaly():
+    data = request.get_json()
+    lat = data.get('lat')
+    lon = data.get('lon')
+    current_temp = data.get('temperature')
+    current_humidity = data.get('humidity')
+    current_wind_speed = data.get('wind_speed')
+
+    if not all([lat, lon, current_temp, current_humidity, current_wind_speed]):
+        return jsonify({"error": "Missing required parameters"}), 400
+    try:
+        anomaly_results = AnomalyDetector.detect_anomalies(
+            lat, 
+            lon, 
+            current_temp, 
+            current_humidity, 
+            current_wind_speed
+        )
+        return jsonify(anomaly_results), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
